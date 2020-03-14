@@ -85,19 +85,47 @@ Izx_foot = 0
 Izy_foot = 0
 Izz_foot = 1
 
-l1_com = 0
-l2_com = 0.145
-l3_com = 0.145
-l4_com = 0.41/2
-l5_com = 0.375/2
-l6_com = 0.04
+l1_x_com = 0
+l2_x_com = 0
+l3_x_com = 0
+l4_x_com = 0
+l5_x_com = 0
+l6_x_com = 0
 
-l1 = 0
-l2 = 0.145
-l3 = 0.145
-l4 = 0.41
-l5 = 0.375
-l6 = 0.04
+l1_y_com = 0
+l2_y_com = 0
+l3_y_com = 0
+l4_y_com = 0
+l5_y_com = 0
+l6_y_com = 0
+
+l1_z_com = 0
+l2_z_com = 0.145
+l3_z_com = 0.145
+l4_z_com = 0.41/2
+l5_z_com = 0.375/2
+l6_z_com = 0.04
+
+l1_x = 0
+l2_x = 0
+l3_x = 0
+l4_x = 0
+l5_x = 0
+l6_x = 0
+
+l1_y = 0
+l2_y = 0
+l3_y = 0
+l4_y = 0
+l5_y = 0
+l6_y = 0
+
+l1_z = 0
+l2_z = 0.145
+l3_z = 0.145
+l4_z = 0.41
+l5_z = 0.375
+l6_z = 0.04
 
 m_hip3 = 0.1
 m_hip2 = 0.1

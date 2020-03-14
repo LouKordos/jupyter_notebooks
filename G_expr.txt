@@ -1,0 +1,14 @@
+// Not supported in C:
+// theta_2
+// theta_3
+// theta_4
+// theta_5
+double temp_1 = 0;
+
+double temp_2 = g*m_foot*(l3_x*cos(theta_2) + l3_z*sin(theta_2) + l4_x*cos(theta_2) + l4_y*sin(theta_2)*sin(theta_3) + l4_z*sin(theta_2)*cos(theta_3) + l5_x*cos(theta_2) + l5_y*sin(theta_3 + theta_4)*sin(theta_2) + l5_z*sin(theta_2)*cos(theta_3 + theta_4) + l6_x_com*cos(theta_2) + l6_y_com*sin(theta_3 + theta_4 + theta_5)*sin(theta_2) + l6_z_com*sin(theta_2)*cos(theta_3 + theta_4 + theta_5)) + g*m_hip1*(l3_x_com*cos(theta_2) + l3_z_com*sin(theta_2)) + g*m_ll*(l3_x*cos(theta_2) + l3_z*sin(theta_2) + l4_x*cos(theta_2) + l4_y*sin(theta_2)*sin(theta_3) + l4_z*sin(theta_2)*cos(theta_3) + l5_x*cos(theta_2) + l5_y*sin(theta_3 + theta_4)*sin(theta_2) + l5_z*sin(theta_2)*cos(theta_3 + theta_4)) + g*m_ul*(l3_x*cos(theta_2) + l3_z*sin(theta_2) + l4_x_com*cos(theta_2) + l4_y_com*sin(theta_2)*sin(theta_3) + l4_z_com*sin(theta_2)*cos(theta_3));
+
+double temp_3 = g*m_foot*(-l4_y*cos(theta_3) + l4_z*sin(theta_3) - l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4) - l6_y_com*cos(theta_3 + theta_4 + theta_5) + l6_z_com*sin(theta_3 + theta_4 + theta_5))*cos(theta_2) + g*m_ll*(-l4_y*cos(theta_3) + l4_z*sin(theta_3) - l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4))*cos(theta_2) + g*m_ul*(-l4_y_com*cos(theta_3) + l4_z_com*sin(theta_3))*cos(theta_2);
+
+double temp_4 = g*m_foot*(-l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4) - l6_y_com*cos(theta_3 + theta_4 + theta_5) + l6_z_com*sin(theta_3 + theta_4 + theta_5))*cos(theta_2) + g*m_ll*(-l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4))*cos(theta_2);
+
+double temp_5 = g*m_foot*(-l6_y_com*cos(theta_3 + theta_4 + theta_5) + l6_z_com*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);

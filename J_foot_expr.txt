@@ -1,0 +1,29 @@
+double temp_1 = l2_x*sin(theta_1) + l2_y*cos(theta_1) + l3_x*sin(theta_1)*cos(theta_2) + l3_y*cos(theta_1) + l3_z*sin(theta_1)*sin(theta_2) + l4_x*sin(theta_1)*cos(theta_2) + l4_y*(sin(theta_1)*sin(theta_2)*sin(theta_3) + cos(theta_1)*cos(theta_3)) + l4_z*(sin(theta_1)*sin(theta_2)*cos(theta_3) - sin(theta_3)*cos(theta_1)) + l5_x*sin(theta_1)*cos(theta_2) + l5_y*(sin(theta_3 + theta_4)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4)*cos(theta_1)) - l5_z*(sin(theta_3 + theta_4)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4)) + l6_x*sin(theta_1)*cos(theta_2) + l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4 + theta_5)*cos(theta_1)) - l6_z*(sin(theta_3 + theta_4 + theta_5)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4 + theta_5));
+
+double temp_2 = (l3_x*sin(theta_2) - l3_z*cos(theta_2) + l4_x*sin(theta_2) - l4_y*sin(theta_3)*cos(theta_2) - l4_z*cos(theta_2)*cos(theta_3) + l5_x*sin(theta_2) - l5_y*sin(theta_3 + theta_4)*cos(theta_2) - l5_z*cos(theta_3 + theta_4)*cos(theta_2) + l6_x*sin(theta_2) - l6_y*sin(theta_3 + theta_4 + theta_5)*cos(theta_2) - l6_z*cos(theta_3 + theta_4 + theta_5)*cos(theta_2))*cos(theta_1);
+
+double temp_3 = -l4_y*(sin(theta_1)*sin(theta_3) + sin(theta_2)*cos(theta_1)*cos(theta_3)) - l4_z*(sin(theta_1)*cos(theta_3) - sin(theta_2)*sin(theta_3)*cos(theta_1)) - l5_y*(sin(theta_3 + theta_4)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4)*cos(theta_1)) + l5_z*(sin(theta_3 + theta_4)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4)) - l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4 + theta_5)*cos(theta_1)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4 + theta_5));
+
+double temp_4 = -l5_y*(sin(theta_3 + theta_4)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4)*cos(theta_1)) + l5_z*(sin(theta_3 + theta_4)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4)) - l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4 + theta_5)*cos(theta_1)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4 + theta_5));
+
+double temp_5 = -l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4 + theta_5)*cos(theta_1)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4 + theta_5));
+
+double temp_6 = -l2_x*cos(theta_1) + l2_y*sin(theta_1) - l3_x*cos(theta_1)*cos(theta_2) + l3_y*sin(theta_1) - l3_z*sin(theta_2)*cos(theta_1) - l4_x*cos(theta_1)*cos(theta_2) + l4_y*(sin(theta_1)*cos(theta_3) - sin(theta_2)*sin(theta_3)*cos(theta_1)) - l4_z*(sin(theta_1)*sin(theta_3) + sin(theta_2)*cos(theta_1)*cos(theta_3)) - l5_x*cos(theta_1)*cos(theta_2) - l5_y*(sin(theta_3 + theta_4)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4)) - l5_z*(sin(theta_3 + theta_4)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4)*cos(theta_1)) - l6_x*cos(theta_1)*cos(theta_2) - l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_2)*cos(theta_1) - sin(theta_1)*cos(theta_3 + theta_4 + theta_5)) - l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1) + sin(theta_2)*cos(theta_3 + theta_4 + theta_5)*cos(theta_1));
+
+double temp_7 = (l3_x*sin(theta_2) - l3_z*cos(theta_2) + l4_x*sin(theta_2) - l4_y*sin(theta_3)*cos(theta_2) - l4_z*cos(theta_2)*cos(theta_3) + l5_x*sin(theta_2) - l5_y*sin(theta_3 + theta_4)*cos(theta_2) - l5_z*cos(theta_3 + theta_4)*cos(theta_2) + l6_x*sin(theta_2) - l6_y*sin(theta_3 + theta_4 + theta_5)*cos(theta_2) - l6_z*cos(theta_3 + theta_4 + theta_5)*cos(theta_2))*sin(theta_1);
+
+double temp_8 = -l4_y*(sin(theta_1)*sin(theta_2)*cos(theta_3) - sin(theta_3)*cos(theta_1)) + l4_z*(sin(theta_1)*sin(theta_2)*sin(theta_3) + cos(theta_1)*cos(theta_3)) + l5_y*(sin(theta_3 + theta_4)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4)) + l5_z*(sin(theta_3 + theta_4)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4)*cos(theta_1)) + l6_y*(sin(theta_3 + theta_4 + theta_5)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4 + theta_5)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4 + theta_5)*cos(theta_1));
+
+double temp_9 = l5_y*(sin(theta_3 + theta_4)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4)) + l5_z*(sin(theta_3 + theta_4)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4)*cos(theta_1)) + l6_y*(sin(theta_3 + theta_4 + theta_5)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4 + theta_5)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4 + theta_5)*cos(theta_1));
+
+double temp_10 = l6_y*(sin(theta_3 + theta_4 + theta_5)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4 + theta_5)) + l6_z*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4 + theta_5)*cos(theta_1));
+
+double temp_11 = 0;
+
+double temp_12 = l3_x*cos(theta_2) + l3_z*sin(theta_2) + l4_x*cos(theta_2) + l4_y*sin(theta_2)*sin(theta_3) + l4_z*sin(theta_2)*cos(theta_3) + l5_x*cos(theta_2) + l5_y*sin(theta_3 + theta_4)*sin(theta_2) + l5_z*sin(theta_2)*cos(theta_3 + theta_4) + l6_x*cos(theta_2) + l6_y*sin(theta_3 + theta_4 + theta_5)*sin(theta_2) + l6_z*sin(theta_2)*cos(theta_3 + theta_4 + theta_5);
+
+double temp_13 = (-l4_y*cos(theta_3) + l4_z*sin(theta_3) - l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4) - l6_y*cos(theta_3 + theta_4 + theta_5) + l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
+
+double temp_14 = (-l5_y*cos(theta_3 + theta_4) + l5_z*sin(theta_3 + theta_4) - l6_y*cos(theta_3 + theta_4 + theta_5) + l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
+
+double temp_15 = (-l6_y*cos(theta_3 + theta_4 + theta_5) + l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
