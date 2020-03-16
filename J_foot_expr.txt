@@ -1,3 +1,9 @@
+// Not supported in C:
+// theta_1
+// theta_2
+// theta_3
+// theta_4
+// theta_5
 double temp_1 = l2_x*sin(theta_1) + l2_y*cos(theta_1) + l3_x*sin(theta_1)*cos(theta_2) + l3_y*cos(theta_1) + l3_z*sin(theta_1)*sin(theta_2) + l4_x*sin(theta_1)*cos(theta_2) + l4_y*(sin(theta_1)*sin(theta_2)*sin(theta_3) + cos(theta_1)*cos(theta_3)) + l4_z*(sin(theta_1)*sin(theta_2)*cos(theta_3) - sin(theta_3)*cos(theta_1)) + l5_x*sin(theta_1)*cos(theta_2) + l5_y*(sin(theta_3 + theta_4)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4)*cos(theta_1)) - l5_z*(sin(theta_3 + theta_4)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4)) + l6_x*sin(theta_1)*cos(theta_2) + l6_y*(sin(theta_3 + theta_4 + theta_5)*sin(theta_1)*sin(theta_2) + cos(theta_3 + theta_4 + theta_5)*cos(theta_1)) - l6_z*(sin(theta_3 + theta_4 + theta_5)*cos(theta_1) - sin(theta_1)*sin(theta_2)*cos(theta_3 + theta_4 + theta_5));
 
 double temp_2 = (l3_x*sin(theta_2) - l3_z*cos(theta_2) + l4_x*sin(theta_2) - l4_y*sin(theta_3)*cos(theta_2) - l4_z*cos(theta_2)*cos(theta_3) + l5_x*sin(theta_2) - l5_y*sin(theta_3 + theta_4)*cos(theta_2) - l5_z*cos(theta_3 + theta_4)*cos(theta_2) + l6_x*sin(theta_2) - l6_y*sin(theta_3 + theta_4 + theta_5)*cos(theta_2) - l6_z*cos(theta_3 + theta_4 + theta_5)*cos(theta_2))*cos(theta_1);
