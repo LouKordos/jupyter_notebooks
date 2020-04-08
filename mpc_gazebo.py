@@ -147,6 +147,11 @@ iterations = 0
 
 dt_step = .5 # seconds between gait phase change
 
+foot_behind = True
+
+pos_desired = 0
+vel_desired = 0.1
+
 while True:
 	start_time = time.time()
 
@@ -158,7 +163,7 @@ while True:
 
 	setup_start_time = time.time()
 
-	if iterations % 2 == 0 and True: # Assuming it runs at 20Hz for now
+	if iterations % 8 == 0 and True: # Assuming it runs at 20Hz for now
 		swing_left = not swing_left
 		swing_right = not swing_right
 		D = np.array([[int(swing_left == True), 0, 0, 0, 0, 0],
@@ -170,8 +175,29 @@ while True:
 
 		print(D)
 		P_param[:m, 1+N+n*N + m*N:1+N+n*N + m*N + m] = D
+
+		if not swing_left: # Contact on left foot
+			if foot_behind:
+				r_y_left = x_t[4] - 0.1
+			else:
+				r_y_left = x_t[4] + 0.1
+        
+		if not swing_right:
+			if foot_behind:
+				r_y_right = x_t[4] - 0.1
+			else:
+				r_y_right = x_t[4] + 0.1
+                
+		foot_behind = not foot_behind
 	
 	P_param[:, 0] = x_t
+
+	pos_desired += vel_desired * dt
+	for i in range(N):
+		x_ref[:, i] = np.array([0, 0, 0, 0, pos_desired, 1.48, 0, 0, 0, 0, vel_desired, 0, -9.81])
+
+	P_param[:, 1:N+1] = x_ref
+
 
 	for i in range(N):
 
