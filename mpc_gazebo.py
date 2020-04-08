@@ -54,9 +54,8 @@ N = 30
 
 dt = 1/30
 
-
-f_min = -500
-f_max = 500
+f_min = -1000
+f_max = 1000
 
 constraints_length = n + N * n + int((N / m)) * m + int((N / m)) * 8
 bounds_length = n * (N+1) + m * N
@@ -89,7 +88,7 @@ for i in range(n * (N+1), bounds_length):
 	lbx += [f_min]
 	ubx += [f_max]
 
-x_t = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+x_t = [0, 0, 0, 0, 0, 1.48, 0, 0, 0, 0, 0, 0, 0]
 
 U_t = np.zeros((m, N))
 X_t = np.tile(np.array(x_t).reshape(n, 1), N+1).reshape(n, N+1)
@@ -97,7 +96,7 @@ X_t = np.tile(np.array(x_t).reshape(n, 1), N+1).reshape(n, N+1)
 X_t = X_t.reshape((n * (N+1), 1))
 U_t = U_t.reshape((m * N, 1))
 
-pos_desired = 1.48
+pos_desired = 1
 vel_desired = 0.01
 
 x_ref = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -9.81]
@@ -111,13 +110,15 @@ P_param = np.zeros((P_rows, P_cols))
 P_param[:, 0] = np.array(x_t)
 P_param[:, 1:N+1] = x_ref
 
+swing_left = True # Swing means in air, thus no contact
+swing_right = False
 
-D = np.array([[0, 0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0, 0]])
+D = np.array([[int(swing_left == True), 0, 0, 0, 0, 0],
+		 			  [0, int(swing_left == True), 0, 0, 0, 0],
+					  [0, 0, int(swing_left == True), 0, 0, 0],
+					  [0, 0, 0, int(swing_right == True), 0, 0],
+					  [0, 0, 0, 0, int(swing_right == True), 0],
+					  [0, 0, 0, 0, 0, int(swing_right == True)]]) #Swing = no contact (and thus 1 any force == 0 must mean force is 0)
 
 P_param[:m, 1+N+n*N + m*N:1+N+n*N + m*N + m] = D
 
@@ -142,6 +143,9 @@ Izy = I_body[2, 1]
 Izz = I_body[2, 2]
 
 t = 0
+iterations = 0
+
+dt_step = .5 # seconds between gait phase change
 
 while True:
 	start_time = time.time()
@@ -154,9 +158,21 @@ while True:
 
 	setup_start_time = time.time()
 
-	P_param[:m, 1+N+n*N + m*N:1+N+n*N + m*N + m] = D
-	P_param[:, 0] = x_t
+	if iterations % 2 == 0 and True: # Assuming it runs at 20Hz for now
+		swing_left = not swing_left
+		swing_right = not swing_right
+		D = np.array([[int(swing_left == True), 0, 0, 0, 0, 0],
+		 			  [0, int(swing_left == True), 0, 0, 0, 0],
+					  [0, 0, int(swing_left == True), 0, 0, 0],
+					  [0, 0, 0, int(swing_right == True), 0, 0],
+					  [0, 0, 0, 0, int(swing_right == True), 0],
+					  [0, 0, 0, 0, 0, int(swing_right == True)]]) #Swing = no contact (and thus 1 any force == 0 must mean force is 0)
 
+		print(D)
+		P_param[:m, 1+N+n*N + m*N:1+N+n*N + m*N + m] = D
+	
+	P_param[:, 0] = x_t
+	
 	# x_ref = np.zeros((n, N))
 
 	# for i in range(N):
@@ -243,9 +259,10 @@ while True:
 	U_t[-m:] = sol['x'][-m:]
 
 	t += dt
+	iterations += 1
 
 	end_time = time.time()
 
-	
+	print("Loop frequency:", 1/(end_time - start_time), "Hz")
 	#print("Iteration time:", (end_time - start_time))
 	#print("Rest of the iteration (without setup):", (end_time - start_time) - (setup_end_time - setup_start_time))
