@@ -172,14 +172,6 @@ while True:
 		P_param[:m, 1+N+n*N + m*N:1+N+n*N + m*N + m] = D
 	
 	P_param[:, 0] = x_t
-	
-	# x_ref = np.zeros((n, N))
-
-	# for i in range(N):
-	# 	pos_desired += vel_desired * dt
-	# 	x_ref[:, i] = np.array([0, 0, 0, 0, pos_desired, 1, 0, 0, 0, 0, vel_desired, 0, -9.81])
-
-	# P_param[:, 1:N+1] = x_ref
 
 	for i in range(N):
 
@@ -249,8 +241,6 @@ while True:
 	u_t = sol['x'][n * (N+1):n * (N+1) + m]
 	#print(r_z_left)
 	sock.sendto(bytes("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left, r_z_left, r_x_right, r_y_right, r_z_right), "utf-8"), addr)
-
-	u_t = u_t = sol['x'][n * (N+1):n * (N+1) + m]
 
 	X_t[:-n] = sol['x'][n:n * (N+1)]
 	X_t[-n:] = sol['x'][-n - m * N: n * (N+1)]
