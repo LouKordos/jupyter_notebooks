@@ -144,8 +144,8 @@ omega_z_desired = 0
 step_length = 0
 
 r_y_left = r_y_right = 0
-r_x_left = -0.15
-r_x_right = 0.15
+r_x_left = -1
+r_x_right = 1
 
 legs_attached = False
 
@@ -170,8 +170,110 @@ while True:
 	state_str, mpc_addr = mpc_socket.recvfrom(4096)
 	states_split = state_str.decode().split('|')
 	x_t = [float(states_split[0]), float(states_split[1]), float(states_split[2]), float(states_split[3]), float(states_split[4]), float(states_split[5]), float(states_split[6]), float(states_split[7]), float(states_split[8]), float(states_split[9]), float(states_split[10]), float(states_split[11]), float(states_split[12])]
+	x_t = np.array(x_t)
+
+	#Step the model one timestep to account for delay caused by solver time
+	phi_t = x_t[0]
+	theta_t = x_t[1]
+	psi_t = x_t[2]
+	r_z_left = -x_t[5]
+	r_z_right = -x_t[5]
+
+	I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
+
+	r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
+										[r_z_left, 0, -r_x_left],
+										[-r_y_left, r_x_left, 0]])
+
+	r_right_skew_symmetric = np.array([[0, -r_z_right, r_y_right],
+										[r_z_right, 0, -r_x_right],
+										[-r_y_right, r_x_right, 0]])
+
+	A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+	B_c = np.block([[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[np.linalg.inv(I_world) @ r_left_skew_symmetric, np.linalg.inv(I_world) @ r_right_skew_symmetric],
+					[1/m_value, 0, 0, 1/m_value, 0, 0],
+					[0, 1/m_value, 0, 0, 1/m_value, 0],
+					[0, 0, 1/m_value, 0, 0, 1/m_value],
+					[0, 0, 0, 0, 0, 0]])
+
+	A_d, B_d = discretize_ss(A_c, B_c, dt)
+
+	x_t_temp = A_d @ np.array(x_t).reshape(n,1) + B_d @ control_history[-1]
 	
-	P_param[:, 0] = np.array(x_t)
+	#Step once more
+	phi_t = x_t_temp[0]
+	theta_t = x_t_temp[1]
+	psi_t = x_t_temp[2]
+	r_z_left = -x_t_temp[5]
+	r_z_right = -x_t_temp[5]
+
+	I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
+
+	r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
+										[r_z_left, 0, -r_x_left],
+										[-r_y_left, r_x_left, 0]])
+
+	r_right_skew_symmetric = np.array([[0, -r_z_right, r_y_right],
+										[r_z_right, 0, -r_x_right],
+										[-r_y_right, r_x_right, 0]])
+
+	A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+					
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+	B_c = np.block([[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0],
+					[np.linalg.inv(I_world) @ r_left_skew_symmetric, np.linalg.inv(I_world) @ r_right_skew_symmetric],
+					[1/m_value, 0, 0, 1/m_value, 0, 0],
+					[0, 1/m_value, 0, 0, 1/m_value, 0],
+					[0, 0, 1/m_value, 0, 0, 1/m_value],
+					[0, 0, 0, 0, 0, 0]])
+
+	A_d, B_d = discretize_ss(A_c, B_c, dt)
+
+	x_t_temp = A_d @ np.array(x_t_temp).reshape(n,1) + B_d @ control_history[-1]
+	P_param[:, 0] = x_t_temp.reshape(n).copy()
 
 	setup_start_time = time.time()
 
@@ -372,8 +474,7 @@ while True:
 
 	#print(sol['x'][n*(N+1)+5::6])
 
-	u_t = sol['x'][n * (N+1) + m :n * (N+1) + m + m]
-	P_param[m:m+m, 1 + N + n*N + m*N + 1] = np.array(u_t).reshape(m)
+	u_t = sol['x'][n * (N+1) : n * (N+1) + m]
 	control_history.append(np.array(u_t).reshape(m,1).copy())
 
 	msg = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left, r_z_left, r_x_right, r_y_right, r_z_right)
@@ -453,12 +554,7 @@ while True:
 		
 		I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
 		
-		r_x_left = -0.15
-		r_y_left = r_y_left_prev
 		r_z_left = -x_t[5]
-		
-		r_x_right = 0.15
-		r_y_right = r_y_right_prev
 		r_z_right = -x_t[5]
 		
 		r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
@@ -509,13 +605,8 @@ while True:
 			psi_t = x_t[2]
 			
 			I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
-			
-			r_x_left = -0.15
-			r_y_left = r_y_left_prev
+
 			r_z_left = -x_t[5]
-			
-			r_x_right = 0.15
-			r_y_right = r_y_right_prev
 			r_z_right = -x_t[5]
 			
 			r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
