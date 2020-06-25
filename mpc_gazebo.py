@@ -56,7 +56,7 @@ n = 13
 m = 6
 N = 20
 
-dt = 1/30
+dt = 1/30.0
 
 f_min_z = 0
 f_max_z = 700
@@ -100,7 +100,6 @@ P_rows = n
 P_cols = 1 + N + n * N + m * N + N * m 
 
 P_param = np.zeros((P_rows, P_cols))
-P_param[:, 0] = np.array(x_t)
 P_param[:, 1:N+1] = x_ref
 
 swing_left = False
@@ -144,8 +143,8 @@ omega_z_desired = 0
 step_length = 0
 
 r_y_left = r_y_right = 0
-r_x_left = -1
-r_x_right = 1
+r_x_left = -0.15
+r_x_right = 0.15
 
 legs_attached = False
 
@@ -155,7 +154,7 @@ for i in range(0, 10):
 print("Entering main MPC loop...")
 
 log_file = open("../cpp/walking_controller/plot_data/mpc_log.csv", 'w')
-log_file.write("t,phi,theta,psi,pos_x,pos_y,pos_z,omega_x,omega_y,omega_z,vel_x,vel_y,vel_z,g,f_x_left,f_y_left,f_z_left,f_x_right,f_y_right,f_z_right,r_x_left,r_y_left,r_z_left,r_x_right,r_y_right,r_z_right\n")
+log_file.write("t,phi,theta,psi,pos_x,pos_y,pos_z,omega_x,omega_y,omega_z,vel_x,vel_y,vel_z,g,f_x_left,f_y_left,f_z_left,f_x_right,f_y_right,f_z_right,r_x_left,r_y_left,r_z_left,r_x_right,r_y_right,r_z_right,x_t_temp_theta\n")
 log_file.close()
 log_file = open("../cpp/walking_controller/plot_data/mpc_log.csv", "a")
 
@@ -170,7 +169,7 @@ while True:
 	state_str, mpc_addr = mpc_socket.recvfrom(4096)
 	states_split = state_str.decode().split('|')
 	x_t = [float(states_split[0]), float(states_split[1]), float(states_split[2]), float(states_split[3]), float(states_split[4]), float(states_split[5]), float(states_split[6]), float(states_split[7]), float(states_split[8]), float(states_split[9]), float(states_split[10]), float(states_split[11]), float(states_split[12])]
-	x_t = np.array(x_t)
+	x_t = np.array(x_t).reshape(n,1)
 
 	#Step the model one timestep to account for delay caused by solver time
 	phi_t = x_t[0]
@@ -182,16 +181,16 @@ while True:
 	I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
 
 	r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
-										[r_z_left, 0, -r_x_left],
-										[-r_y_left, r_x_left, 0]])
+									[r_z_left, 0, -r_x_left],
+									[-r_y_left, r_x_left, 0]])
 
 	r_right_skew_symmetric = np.array([[0, -r_z_right, r_y_right],
-										[r_z_right, 0, -r_x_right],
-										[-r_y_right, r_x_right, 0]])
+									[r_z_right, 0, -r_x_right],
+									[-r_y_right, r_x_right, 0]])
 
-	A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+	A_c = np.array([[0, 0, 0, 0, 0, 0, cos(psi_t)*cos(theta_t), sin(phi_t)*sin(theta_t)*cos(psi_t) - sin(psi_t)*cos(phi_t), sin(phi_t)*sin(psi_t) + sin(theta_t)*cos(phi_t)*cos(psi_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, sin(psi_t)*cos(theta_t), sin(phi_t)*sin(psi_t)*sin(theta_t) + cos(phi_t)*cos(psi_t), -sin(phi_t)*cos(psi_t) + sin(psi_t)*sin(theta_t)*cos(phi_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, -sin(theta_t), sin(phi_t)*cos(theta_t), cos(phi_t)*cos(theta_t), 0, 0, 0, 0],
 					
 					[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
 					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
@@ -221,9 +220,8 @@ while True:
 
 	A_d, B_d = discretize_ss(A_c, B_c, dt)
 
-	x_t_temp = A_d @ np.array(x_t).reshape(n,1) + B_d @ control_history[-1]
-	
-	#Step once more
+	x_t_temp = A_d @ np.array(x_t).reshape(n,1) + B_d @ control_history[-2]
+
 	phi_t = x_t_temp[0]
 	theta_t = x_t_temp[1]
 	psi_t = x_t_temp[2]
@@ -233,16 +231,16 @@ while True:
 	I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
 
 	r_left_skew_symmetric = np.array([[0, -r_z_left, r_y_left],
-										[r_z_left, 0, -r_x_left],
-										[-r_y_left, r_x_left, 0]])
+									[r_z_left, 0, -r_x_left],
+									[-r_y_left, r_x_left, 0]])
 
 	r_right_skew_symmetric = np.array([[0, -r_z_right, r_y_right],
-										[r_z_right, 0, -r_x_right],
-										[-r_y_right, r_x_right, 0]])
+									[r_z_right, 0, -r_x_right],
+									[-r_y_right, r_x_right, 0]])
 
-	A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+	A_c = np.array([[0, 0, 0, 0, 0, 0, cos(psi_t)*cos(theta_t), sin(phi_t)*sin(theta_t)*cos(psi_t) - sin(psi_t)*cos(phi_t), sin(phi_t)*sin(psi_t) + sin(theta_t)*cos(phi_t)*cos(psi_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, sin(psi_t)*cos(theta_t), sin(phi_t)*sin(psi_t)*sin(theta_t) + cos(phi_t)*cos(psi_t), -sin(phi_t)*cos(psi_t) + sin(psi_t)*sin(theta_t)*cos(phi_t), 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 0, -sin(theta_t), sin(phi_t)*cos(theta_t), cos(phi_t)*cos(theta_t), 0, 0, 0, 0],
 					
 					[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
 					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
@@ -273,7 +271,9 @@ while True:
 	A_d, B_d = discretize_ss(A_c, B_c, dt)
 
 	x_t_temp = A_d @ np.array(x_t_temp).reshape(n,1) + B_d @ control_history[-1]
+
 	P_param[:, 0] = x_t_temp.reshape(n).copy()
+	#P_param[:, 0] = x_t.reshape(n).copy()
 
 	setup_start_time = time.time()
 
@@ -429,23 +429,24 @@ while True:
 											[r_z_right, 0, -r_x_right],
 											[-r_y_right, r_x_right, 0]])
 
-		A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+		A_c = np.array([[0, 0, 0, 0, 0, 0, cos(psi_t)*cos(theta_t), sin(phi_t)*sin(theta_t)*cos(psi_t) - sin(psi_t)*cos(phi_t), sin(phi_t)*sin(psi_t) + sin(theta_t)*cos(phi_t)*cos(psi_t), 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, sin(psi_t)*cos(theta_t), sin(phi_t)*sin(psi_t)*sin(theta_t) + cos(phi_t)*cos(psi_t), -sin(phi_t)*cos(psi_t) + sin(psi_t)*sin(theta_t)*cos(phi_t), 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, -sin(theta_t), sin(phi_t)*cos(theta_t), cos(phi_t)*cos(theta_t), 0, 0, 0, 0],
+						
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+						
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+						
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+						
+						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 		B_c = np.block([[0, 0, 0, 0, 0, 0],
 						[0, 0, 0, 0, 0, 0],
 						[0, 0, 0, 0, 0, 0],
@@ -472,12 +473,10 @@ while True:
 
 	sol = solver(x0=x0_solver, lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg, p=P_param)
 
-	#print(sol['x'][n*(N+1)+5::6])
-
 	u_t = sol['x'][n * (N+1) : n * (N+1) + m]
 	control_history.append(np.array(u_t).reshape(m,1).copy())
 
-	msg = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left, r_z_left, r_x_right, r_y_right, r_z_right)
+	msg = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left, r_z_left, r_x_right, r_y_right, r_z_right, x_t_temp[1][0])
 	print("msg:", msg)
 
 	mpc_socket.sendto(bytes(msg, "utf-8"), mpc_addr)
@@ -529,7 +528,7 @@ while True:
 
 		log_file.write(f"{t},{x_t[0]},{x_t[1]},{x_t[2]},{x_t[3]},{x_t[4]},{x_t[5]},{x_t[6]},{x_t[7]},{x_t[8]},{x_t[9]},{x_t[10]},{x_t[11]},{x_t[12]}," + msg.replace("|", ",") + f",{left_leg_torques[0, 0]},{left_leg_torques[1, 0]},{left_leg_torques[2, 0]},{left_leg_torques[3, 0]},{left_leg_torques[4, 0]},{right_leg_torques[0, 0]},{right_leg_torques[1, 0]},{right_leg_torques[2, 0]},{right_leg_torques[3, 0]},{right_leg_torques[4, 0]},{float(left_leg_state_split[0])},{float(left_leg_state_split[1])},{float(left_leg_state_split[2])},{float(left_leg_state_split[3])},{float(left_leg_state_split[4])},{float(left_leg_state_split[5])},{float(left_leg_state_split[6])},{float(left_leg_state_split[7])},{float(left_leg_state_split[8])},{float(left_leg_state_split[9])},{float(right_leg_state_split[0])},{float(right_leg_state_split[1])},{float(right_leg_state_split[2])},{float(right_leg_state_split[3])},{float(right_leg_state_split[4])},{float(right_leg_state_split[5])},{float(right_leg_state_split[6])},{float(right_leg_state_split[7])},{float(right_leg_state_split[8])},{float(right_leg_state_split[9])}" + "\n")
 	else:
-		log_file.write(f"{t},{x_t[0]},{x_t[1]},{x_t[2]},{x_t[3]},{x_t[4]},{x_t[5]},{x_t[6]},{x_t[7]},{x_t[8]},{x_t[9]},{x_t[10]},{x_t[11]},{x_t[12]}," + msg.replace("|", ",") + f",{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}" + "\n")
+		log_file.write(f"{t},{x_t[0]},{x_t[1]},{x_t[2]},{x_t[3]},{x_t[4]},{x_t[5]},{x_t[6]},{x_t[7]},{x_t[8]},{x_t[9]},{x_t[10]},{x_t[11]},{x_t[12]}," + msg.replace("|", ",") + f",{x_t_temp[1][0]}"+ f",{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},{0}" + "\n")
 
 	X_t[:-n] = sol['x'][n:n * (N+1)]
 	X_t[-n:] = sol['x'][-n - m * N: n * (N+1)]
@@ -565,9 +564,9 @@ while True:
 										[r_z_right, 0, -r_x_right],
 										[-r_y_right, r_x_right, 0]])
 		
-		A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
-						[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
-						[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+		A_c = np.array([[0, 0, 0, 0, 0, 0, cos(psi_t)*cos(theta_t), sin(phi_t)*sin(theta_t)*cos(psi_t) - sin(psi_t)*cos(phi_t), sin(phi_t)*sin(psi_t) + sin(theta_t)*cos(phi_t)*cos(psi_t), 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, sin(psi_t)*cos(theta_t), sin(phi_t)*sin(psi_t)*sin(theta_t) + cos(phi_t)*cos(psi_t), -sin(phi_t)*cos(psi_t) + sin(psi_t)*sin(theta_t)*cos(phi_t), 0, 0, 0, 0],
+						[0, 0, 0, 0, 0, 0, -sin(theta_t), sin(phi_t)*cos(theta_t), cos(phi_t)*cos(theta_t), 0, 0, 0, 0],
 						
 						[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
 						[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
@@ -617,9 +616,9 @@ while True:
 											[r_z_right, 0, -r_x_right],
 											[-r_y_right, r_x_right, 0]])
 			
-			A_c = np.array([[0, 0, 0, 0, 0, 0, math.cos(psi_t)*math.cos(theta_t), -math.sin(psi_t)*math.cos(theta_t), math.sin(theta_t), 0, 0, 0, 0],
-							[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(theta_t)*math.cos(psi_t) + math.sin(psi_t)*math.cos(phi_t), -math.sin(phi_t)*math.sin(psi_t)*math.sin(theta_t) + math.cos(phi_t)*math.cos(psi_t), -math.sin(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
-							[0, 0, 0, 0, 0, 0, math.sin(phi_t)*math.sin(psi_t) - math.sin(theta_t)*math.cos(phi_t)*math.cos(psi_t), math.sin(phi_t)*math.cos(psi_t) + math.sin(psi_t)*math.sin(theta_t)*math.cos(phi_t), math.cos(phi_t)*math.cos(theta_t), 0, 0, 0, 0],
+			A_c = np.array([[0, 0, 0, 0, 0, 0, cos(psi_t)*cos(theta_t), sin(phi_t)*sin(theta_t)*cos(psi_t) - sin(psi_t)*cos(phi_t), sin(phi_t)*sin(psi_t) + sin(theta_t)*cos(phi_t)*cos(psi_t), 0, 0, 0, 0],
+							[0, 0, 0, 0, 0, 0, sin(psi_t)*cos(theta_t), sin(phi_t)*sin(psi_t)*sin(theta_t) + cos(phi_t)*cos(psi_t), -sin(phi_t)*cos(psi_t) + sin(psi_t)*sin(theta_t)*cos(phi_t), 0, 0, 0, 0],
+							[0, 0, 0, 0, 0, 0, -sin(theta_t), sin(phi_t)*cos(theta_t), cos(phi_t)*cos(theta_t), 0, 0, 0, 0],
 							
 							[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
 							[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
