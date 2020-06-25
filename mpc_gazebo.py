@@ -102,7 +102,7 @@ P_cols = 1 + N + n * N + m * N + N * m
 P_param = np.zeros((P_rows, P_cols))
 P_param[:, 1:N+1] = x_ref
 
-swing_left = False
+swing_left = True
 swing_right = False
 
 m_value = 30 # [kg]
@@ -134,7 +134,7 @@ foot_behind_right = swing_right
 pos_y_desired = 0
 vel_y_desired = 0
 
-pos_z_desired = 0.8
+pos_z_desired = 1.5
 vel_z_desired = 0
 
 psi_desired = 0
@@ -297,23 +297,23 @@ while True:
 									[0, 0, 0, 0, int(swing_right_temp == True), 0],
 									[0, 0, 0, 0, 0, int(swing_right_temp == True)]]) # Swing = no contact (and thus 1 any force == 0 must mean force is 0)    
 		
-		#P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
+		P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
 
-		#print("D_k in P_Param:\n", P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m])
+		print("D_k in P_Param:\n", P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m])
 		
-		# if P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # No feet in contact
-		# 	P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, 0]).copy()
-		# 	#print("No feet in contact")
-		# elif P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Right foot in contact
-		# 	P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, m_value * 9.81]).copy()
-		# 	#print("Right foot in contact")
-		# elif  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # Left foot in contact
-		# 	P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, m_value * 9.81, 0, 0, 0]).copy()
-		# 	#print("Left foot in contact")
-		# if  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Both feet in contact
-		# 	P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
+		if P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # No feet in contact
+			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, 0]).copy()
+			#print("No feet in contact")
+		elif P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Right foot in contact
+			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, m_value * 9.81]).copy()
+			#print("Right foot in contact")
+		elif  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # Left foot in contact
+			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, m_value * 9.81, 0, 0, 0]).copy()
+			#print("Left foot in contact")
+		if  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Both feet in contact
+			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
 
-		P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
+		#P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
 
 	#print("D_k:\n", P_param[:m, 1 + N + n*N + m*N: 1 + N + n*N + m*N + m])
 
