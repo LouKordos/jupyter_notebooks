@@ -102,7 +102,7 @@ P_cols = 1 + N + n * N + m * N + N * m
 P_param = np.zeros((P_rows, P_cols))
 P_param[:, 1:N+1] = x_ref
 
-swing_left = True
+swing_left = False
 swing_right = False
 
 m_value = 30 # [kg]
@@ -140,7 +140,7 @@ vel_z_desired = 0
 psi_desired = 0
 omega_z_desired = 0
 
-step_length = 0
+step_length = 0.2
 
 r_y_left = r_y_right = 0
 r_x_left = -0.15
@@ -297,7 +297,7 @@ while True:
 									[0, 0, 0, 0, int(swing_right_temp == True), 0],
 									[0, 0, 0, 0, 0, int(swing_right_temp == True)]]) # Swing = no contact (and thus 1 any force == 0 must mean force is 0)    
 		
-		P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
+		#P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
 
 		print("D_k in P_Param:\n", P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m])
 		
