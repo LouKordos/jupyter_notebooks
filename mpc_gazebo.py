@@ -126,7 +126,7 @@ Izz = I_body[2, 2]
 t = 0
 iterations = 0
 
-contact_swap_interval = 15
+contact_swap_interval = 5
 
 foot_behind_left = swing_left # this is because it will be inverted on the first contact switch
 foot_behind_right = swing_right
@@ -140,7 +140,7 @@ vel_z_desired = 0
 psi_desired = 0
 omega_z_desired = 0
 
-step_length = 0.0
+step_length = 0.05
 
 r_y_left = r_y_right = 0
 r_x_left = -0.15
