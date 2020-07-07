@@ -102,7 +102,7 @@ P_cols = 1 + N + n * N + m * N + N * m
 P_param = np.zeros((P_rows, P_cols))
 P_param[:, 1:N+1] = x_ref
 
-swing_left = False
+swing_left = True
 swing_right = False
 
 m_value = 30 # [kg]
@@ -140,7 +140,7 @@ vel_z_desired = 0
 psi_desired = 0
 omega_z_desired = 0
 
-step_length = 0.2
+step_length = 0.0
 
 r_y_left = r_y_right = 0
 r_x_left = -0.15
@@ -171,7 +171,7 @@ while True:
 	x_t = [float(states_split[0]), float(states_split[1]), float(states_split[2]), float(states_split[3]), float(states_split[4]), float(states_split[5]), float(states_split[6]), float(states_split[7]), float(states_split[8]), float(states_split[9]), float(states_split[10]), float(states_split[11]), float(states_split[12])]
 	x_t = np.array(x_t).reshape(n,1)
 
-	#Step the model one timestep to account for delay caused by solver time
+	#Step the model two timesteps to account for delay caused by solver time and possibly communication / rest of the loop (still needs to be further investigated!!!)
 	phi_t = x_t[0]
 	theta_t = x_t[1]
 	psi_t = x_t[2]
@@ -273,7 +273,6 @@ while True:
 	x_t_temp = A_d @ np.array(x_t_temp).reshape(n,1) + B_d @ control_history[-1]
 
 	P_param[:, 0] = x_t_temp.reshape(n).copy()
-	#P_param[:, 0] = x_t.reshape(n).copy()
 
 	setup_start_time = time.time()
 
@@ -284,6 +283,7 @@ while True:
 	swing_left_temp = swing_left
 	swing_right_temp = swing_right
 
+	# Future contact setup
 	for k in range(N):
 
 		if (iterations+k) % contact_swap_interval == 0 and k is not 0:
@@ -295,47 +295,50 @@ while True:
 									[0, 0, int(swing_left_temp == True), 0, 0, 0],
 									[0, 0, 0, int(swing_right_temp == True), 0, 0],
 									[0, 0, 0, 0, int(swing_right_temp == True), 0],
-									[0, 0, 0, 0, 0, int(swing_right_temp == True)]]) # Swing = no contact (and thus 1 any force == 0 must mean force is 0)    
+									[0, 0, 0, 0, 0, int(swing_right_temp == True)]]) # Swing = no contact (and thus 1 * [any force] == 0 must mean [any force[] is 0)
 		
-		#P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
-
-		print("D_k in P_Param:\n", P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m])
+		P_param[:m, 1+N+n*N+m*N+(k*m):1+N+n*N+m*N+(k*m)+m] = D_current_temp.copy()
 		
 		if P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # No feet in contact
 			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, 0]).copy()
-			#print("No feet in contact")
+			# print("No feet in contact")
 		elif P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 1 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Right foot in contact
 			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, 0, 0, 0, m_value * 9.81]).copy()
-			#print("Right foot in contact")
+			# print("Right foot in contact")
 		elif  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 1: # Left foot in contact
 			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, m_value * 9.81, 0, 0, 0]).copy()
-			#print("Left foot in contact")
+			# print("Left foot in contact")
 		if  P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][0, 0] == 0 and P_param[:m, 1 + N + n*N + m*N + k*m: 1 + N + n*N + m*N + k*m + m][3, 3] == 0: # Both feet in contact
+			# print("Both feet in contact")
 			P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
 
-		#P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
+		P_param[m:m+m, 1 + N + n*N + m*N + (k*m)] = np.array([0, 0, (m_value * 9.81) / 2, 0, 0, (m_value * 9.81) / 2]).copy()
 
 	#print("D_k:\n", P_param[:m, 1 + N + n*N + m*N: 1 + N + n*N + m*N + m])
-
-	if foot_behind_left:
-		r_y_left = -step_length
-	else:
-		r_y_left = step_length
-			
-	if foot_behind_right:
-		r_y_right = -step_length
-	else:
-		r_y_right = step_length
 
 	if iterations % (contact_swap_interval * 2) == 0:
 		foot_behind_left = not foot_behind_left
 		foot_behind_right = not foot_behind_right
 
+	if iterations % contact_swap_interval == 0:  
+		if foot_behind_left:
+			left_foot_pos_world = x_t[4] - step_length
+		else:
+			left_foot_pos_world = x_t[4] + step_length
+
+		if foot_behind_right:
+			right_foot_pos_world = x_t[4] - step_length
+		else:
+			right_foot_pos_world = x_t[4] + step_length
+
+	r_y_left = left_foot_pos_world - x_t[4]
+	r_y_right = right_foot_pos_world - x_t[4]
+
 	r_z_left = -x_t[5]
 	r_z_right = -x_t[5]
 
+	# Set up reference trajectory for prediction horizon
 	x_ref = np.zeros((n, N))
-
 	pos_y_temp = pos_y_desired
 	psi_temp = psi_desired
 
@@ -357,6 +360,10 @@ while True:
 	r_y_left_prev = r_y_left
 	r_y_right_prev = r_y_right
 
+	left_foot_pos_world_prev = left_foot_pos_world
+	right_foot_pos_world_prev = right_foot_pos_world
+
+	# Discretization loop for prediction horizon
 	for i in range(N):
 		if i < N-1:
 			phi_t = X_t[n*(i+1)+0, 0]
@@ -397,26 +404,27 @@ while True:
 			pos_x_t = x_t[3]
 			pos_y_t = x_t[4]
 			pos_z_t = x_t[5]
-			
-		if foot_behind_left_temp:
-			r_y_left = -step_length
-		else:
-			r_y_left = step_length
-			
-		if foot_behind_right_temp:
-			r_y_right = -step_length
-		else:
-			r_y_right = step_length
 		
 		if (iterations+i) % (contact_swap_interval * 2) == 0 and i is not 0:
 			foot_behind_left_temp = not foot_behind_left_temp
 			foot_behind_right_temp = not foot_behind_right_temp
+
+		if (iterations+i) % contact_swap_interval == 0 and i is not 0:
+			if foot_behind_left_temp:
+				left_foot_pos_world = pos_y_t - step_length
+			else:
+				left_foot_pos_world = pos_y_t + step_length
+
+			if foot_behind_right_temp:
+				right_foot_pos_world = pos_y_t - step_length
+			else:
+				right_foot_pos_world = pos_y_t + step_length
+        
+		r_y_left = left_foot_pos_world - pos_y_t
+		r_y_right = right_foot_pos_world - pos_y_t
 		
 		r_z_left = -pos_z_t
 		r_z_right = -pos_z_t
-		
-		#r_y_left -= (pos_y_t_next - pos_y_t)
-		#r_y_right -= (pos_y_t_next - pos_y_t)
 
 		I_world = np.array([[(Ixx*cos(psi_t) + Iyx*sin(psi_t))*cos(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*sin(psi_t), -(Ixx*cos(psi_t) + Iyx*sin(psi_t))*sin(psi_t) + (Ixy*cos(psi_t) + Iyy*sin(psi_t))*cos(psi_t), Ixz*cos(psi_t) + Iyz*sin(psi_t)], [(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*cos(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*sin(psi_t), -(-Ixx*sin(psi_t) + Iyx*cos(psi_t))*sin(psi_t) + (-Ixy*sin(psi_t) + Iyy*cos(psi_t))*cos(psi_t), -Ixz*sin(psi_t) + Iyz*cos(psi_t)], [Ixy*sin(psi_t) + Izx*cos(psi_t), Ixy*cos(psi_t) - Izx*sin(psi_t), Izz]])
 		
@@ -463,9 +471,14 @@ while True:
 		
 		P_param[:, 1 + N + (i*n):1 + N + (i*n)+n] = A_d.copy()
 		P_param[:, 1 + N + n * N + (i*m):1 + N + n * N + (i*m)+m] = B_d.copy()
+	
+	# Reset to value before prediction horizon, otherwise value would be (N*dt)s into the future
+	left_foot_pos_world = left_foot_pos_world_prev
+	right_foot_pos_world = right_foot_pos_world_prev
 
 	r_y_left = r_y_left_prev
 	r_y_right = r_y_right_prev
+	r_z_left = r_z_right = -x_t[5]
 
 	setup_end_time = time.time()
 	
@@ -476,15 +489,12 @@ while True:
 	u_t = sol['x'][n * (N+1) : n * (N+1) + m]
 	control_history.append(np.array(u_t).reshape(m,1).copy())
 
-	msg = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left, r_z_left, r_x_right, r_y_right, r_z_right, x_t_temp[1][0])
+	msg = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}".format(u_t[0], u_t[1], u_t[2], u_t[3], u_t[4], u_t[5], r_x_left, r_y_left[0], r_z_left[0], r_x_right, r_y_right[0], r_z_right[0], x_t_temp[1][0])
 	print("msg:", msg)
 
 	mpc_socket.sendto(bytes(msg, "utf-8"), mpc_addr)
 
 	if legs_attached:
-
-		#mpc_socket.sendto(bytes("0|0|0|0|0|0|0|0|0|0|0|0", "utf-8"), addr)
-
 		left_leg_state_str, left_leg_addr = left_leg_socket.recvfrom(4096)
 		#left_leg_state_str = b"0|0|0|0|0|0|0|0|0|0"
 		left_leg_state_split = left_leg_state_str.decode().split('|')
