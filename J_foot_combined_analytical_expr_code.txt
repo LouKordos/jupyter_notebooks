@@ -1,0 +1,36 @@
+// Not supported in C:
+// theta_2
+// theta_3
+// theta_4
+// theta_5
+double temp_1 = config.l3_x*sin(theta_2) - config.l3_z*cos(theta_2) + config.l4_x*sin(theta_2) - config.l4_y*sin(theta_3)*cos(theta_2) - config.l4_z*cos(theta_2)*cos(theta_3) + config.l5_x*sin(theta_2) - config.l5_y*sin(theta_3 + theta_4)*cos(theta_2) - config.l5_z*cos(theta_3 + theta_4)*cos(theta_2) + config.l6_x*sin(theta_2) - config.l6_y*sin(theta_3 + theta_4 + theta_5)*cos(theta_2) - config.l6_z*cos(theta_3 + theta_4 + theta_5)*cos(theta_2);
+
+double temp_2 = (-config.l4_y*cos(theta_3) + config.l4_z*sin(theta_3) - config.l5_y*cos(theta_3 + theta_4) + config.l5_z*sin(theta_3 + theta_4) - config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*sin(theta_2);
+
+double temp_3 = (-config.l5_y*cos(theta_3 + theta_4) + config.l5_z*sin(theta_3 + theta_4) - config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*sin(theta_2);
+
+double temp_4 = (-config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*sin(theta_2);
+
+double temp_5 = 0;
+
+double temp_6 = config.l4_y*sin(theta_3) + config.l4_z*cos(theta_3) + config.l5_y*sin(theta_3 + theta_4) + config.l5_z*cos(theta_3 + theta_4) + config.l6_y*sin(theta_3 + theta_4 + theta_5) + config.l6_z*cos(theta_3 + theta_4 + theta_5);
+
+double temp_7 = config.l5_y*sin(theta_3 + theta_4) + config.l5_z*cos(theta_3 + theta_4) + config.l6_y*sin(theta_3 + theta_4 + theta_5) + config.l6_z*cos(theta_3 + theta_4 + theta_5);
+
+double temp_8 = config.l6_y*sin(theta_3 + theta_4 + theta_5) + config.l6_z*cos(theta_3 + theta_4 + theta_5);
+
+double temp_9 = config.l3_x*cos(theta_2) + config.l3_z*sin(theta_2) + config.l4_x*cos(theta_2) + config.l4_y*sin(theta_2)*sin(theta_3) + config.l4_z*sin(theta_2)*cos(theta_3) + config.l5_x*cos(theta_2) + config.l5_y*sin(theta_3 + theta_4)*sin(theta_2) + config.l5_z*sin(theta_2)*cos(theta_3 + theta_4) + config.l6_x*cos(theta_2) + config.l6_y*sin(theta_3 + theta_4 + theta_5)*sin(theta_2) + config.l6_z*sin(theta_2)*cos(theta_3 + theta_4 + theta_5);
+
+double temp_10 = (-config.l4_y*cos(theta_3) + config.l4_z*sin(theta_3) - config.l5_y*cos(theta_3 + theta_4) + config.l5_z*sin(theta_3 + theta_4) - config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
+
+double temp_11 = (-config.l5_y*cos(theta_3 + theta_4) + config.l5_z*sin(theta_3 + theta_4) - config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
+
+double temp_12 = (-config.l6_y*cos(theta_3 + theta_4 + theta_5) + config.l6_z*sin(theta_3 + theta_4 + theta_5))*cos(theta_2);
+
+double temp_13 = 0;
+
+double temp_14 = 1;
+
+double temp_15 = 1;
+
+double temp_16 = 1;
